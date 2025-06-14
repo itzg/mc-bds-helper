@@ -1,13 +1,13 @@
 package api
 
 import (
-	"github.com/itzg/mc-bds-helper/internal"
+	"github.com/itzg/mc-bds-helper/lookup"
 	"log"
 	"net/http"
 )
 
 func GetLatest(w http.ResponseWriter, _ *http.Request) {
-	url, err := internal.LookupLatestVersion(internal.TypeRelease)
+	url, err := lookup.LookupLatestVersion(lookup.TypeRelease)
 	if err != nil {
 		log.Printf("E: %s", err)
 		w.Header().Set("Content-Type", "text/plain")
