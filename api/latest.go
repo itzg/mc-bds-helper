@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"log/slog"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -33,7 +33,7 @@ func GetLatest(w http.ResponseWriter, _ *http.Request) {
 		var err *lookupError
 		cachedArchiveUrl, err = lookupLatestVersion()
 		if err != nil {
-			slog.Error("failed to lookup latest version:", "err", err)
+			log.Printf("E: %s", err)
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(err.statusCode)
 			_, _ = w.Write([]byte(err.Error()))
