@@ -1,4 +1,4 @@
-package api
+package internal
 
 import (
 	"encoding/json"
@@ -12,8 +12,8 @@ var versionsCache = cache.New(60*time.Minute, 120*time.Minute)
 
 const (
 	downloadLinksUrl = "https://net-secondary.web.minecraft-services.net/api/v1.0/download/links"
-	typeRelease      = "serverBedrockLinux"
-	typePreview      = "serverBedrockLinuxPreview"
+	TypeRelease      = "serverBedrockLinux"
+	TypePreview      = "serverBedrockLinuxPreview"
 )
 
 type DownloadLinksResponse struct {
@@ -25,7 +25,7 @@ type DownloadLinksResponse struct {
 	} `json:"result"`
 }
 
-func lookupLatestVersion(downloadType string) (string, *lookupError) {
+func LookupLatestVersion(downloadType string) (string, *LookupError) {
 	url, present := versionsCache.Get(downloadType)
 	if present {
 		log.Print("Using cached version", downloadType)
@@ -58,20 +58,20 @@ func lookupLatestVersion(downloadType string) (string, *lookupError) {
 	return "", newLookupError("failed to find release link", nil, http.StatusInternalServerError)
 }
 
-type lookupError struct {
+type LookupError struct {
 	message    string
 	wrapped    error
-	statusCode int
+	StatusCode int
 }
 
-func newLookupError(message string, wrapped error, statusCode int) *lookupError {
-	return &lookupError{message: message, wrapped: wrapped, statusCode: statusCode}
+func newLookupError(message string, wrapped error, statusCode int) *LookupError {
+	return &LookupError{message: message, wrapped: wrapped, StatusCode: statusCode}
 }
 
-func (e *lookupError) Unwrap() error {
+func (e *LookupError) Unwrap() error {
 	return e.wrapped
 }
 
-func (e *lookupError) Error() string {
+func (e *LookupError) Error() string {
 	return e.message
 }
