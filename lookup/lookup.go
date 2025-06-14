@@ -51,6 +51,7 @@ func LatestVersion(downloadType string) (string, *LookupError) {
 	for _, link := range DownloadLinksReponse.Result.Links {
 		if link.DownloadType == downloadType {
 			versionsCache.Set(link.DownloadType, link.DownloadUrl, cache.DefaultExpiration)
+			log.Print("Resolved URL ", link.DownloadUrl, " for type ", link.DownloadType)
 			return link.DownloadUrl, nil
 		}
 	}
