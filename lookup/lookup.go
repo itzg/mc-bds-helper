@@ -13,7 +13,7 @@ var versionsCache = cache.New(60*time.Minute, 120*time.Minute)
 const (
 	downloadLinksUrl = "https://net-secondary.web.minecraft-services.net/api/v1.0/download/links"
 	TypeRelease      = "serverBedrockLinux"
-	TypePreview      = "serverBedrockLinuxPreview"
+	TypePreview      = "serverBedrockPreviewLinux"
 )
 
 type DownloadLinksResponse struct {
@@ -25,10 +25,10 @@ type DownloadLinksResponse struct {
 	} `json:"result"`
 }
 
-func LookupLatestVersion(downloadType string) (string, *LookupError) {
+func LatestVersion(downloadType string) (string, *LookupError) {
 	url, present := versionsCache.Get(downloadType)
 	if present {
-		log.Print("Using cached version", downloadType)
+		log.Print("Using cached version for type ", downloadType)
 		return url.(string), nil
 	}
 
@@ -55,7 +55,7 @@ func LookupLatestVersion(downloadType string) (string, *LookupError) {
 		}
 	}
 
-	return "", newLookupError("failed to find release link", nil, http.StatusInternalServerError)
+	return "", newLookupError("failed to find link", nil, http.StatusInternalServerError)
 }
 
 type LookupError struct {

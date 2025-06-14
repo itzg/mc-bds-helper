@@ -7,7 +7,7 @@ import (
 )
 
 func GetLatest(w http.ResponseWriter, _ *http.Request) {
-	url, err := lookup.LookupLatestVersion(lookup.TypeRelease)
+	url, err := lookup.LatestVersion(lookup.TypeRelease)
 	if err != nil {
 		log.Printf("E: %s", err)
 		w.Header().Set("Content-Type", "text/plain")
