@@ -1,17 +1,17 @@
 package api
 
 import (
-	"github.com/itzg/restify"
-	"log"
+	"encoding/json"
+	"log/slog"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 )
 
 const (
 	defaultCacheDuration = time.Hour
-	downloadPage = "https://www.minecraft.net/en-us/download/server/bedrock"
+	downloadLinksUrl     = "https://net-secondary.web.minecraft-services.net/api/v1.0/download/links"
+	typeRelease          = "serverBedrockLinux"
 )
 
 var (
@@ -19,15 +19,24 @@ var (
 	cacheUntil       time.Time
 )
 
-func GetLatest(w http.ResponseWriter, r *http.Request) {
+type DownloadLinksResponse struct {
+	Result struct {
+		Links []struct {
+			DownloadType string `json:"downloadType"`
+			DownloadUrl  string `json:"downloadUrl"`
+		} `json:"links"`
+	} `json:"result"`
+}
+
+func GetLatest(w http.ResponseWriter, _ *http.Request) {
 	if cachedArchiveUrl == "" || time.Now().After(cacheUntil) {
 		var err *lookupError
 		cachedArchiveUrl, err = lookupLatestVersion()
-		if err !=  nil {
-			log.Printf("E: %s", err)
+		if err != nil {
+			slog.Error("failed to lookup latest version:", "err", err)
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(err.statusCode)
-			w.Write([]byte(err.Error()))
+			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
 
@@ -37,7 +46,7 @@ func GetLatest(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(cachedArchiveUrl))
+	_, _ = w.Write([]byte(cachedArchiveUrl))
 }
 
 func loadCacheDuration() time.Duration {
@@ -57,8 +66,8 @@ func loadCacheDuration() time.Duration {
 }
 
 type lookupError struct {
-	message string
-	wrapped error
+	message    string
+	wrapped    error
 	statusCode int
 }
 
@@ -75,30 +84,27 @@ func (e *lookupError) Error() string {
 }
 
 func lookupLatestVersion() (string, *lookupError) {
-	downloadUrl, err := url.Parse(downloadPage)
+	resp, err := http.Get(downloadLinksUrl)
+
 	if err != nil {
-		return "", newLookupError("Failed to parse download URL", err, http.StatusInternalServerError)
+		return "", newLookupError("http issue", err, http.StatusInternalServerError)
 	}
 
-	content, err := restify.LoadContent(downloadUrl, "mc-bds-helper/latest", restify.WithHeaders(
-		map[string]string{
-			"accept-language": "*",
-		},
-	))
+	if resp.StatusCode != http.StatusOK {
+		return "", newLookupError("failed to lookup latest version", nil, resp.StatusCode)
+	}
+
+	DownloadLinksReponse := DownloadLinksResponse{}
+	err = json.NewDecoder(resp.Body).Decode(&DownloadLinksReponse)
 	if err != nil {
-		return "", newLookupError("Failed to load content", err, http.StatusInternalServerError)
+		return "", newLookupError("failed to decode response", err, http.StatusInternalServerError)
 	}
 
-	subset := restify.FindSubsetByAttributeNameValue(content, "data-platform", "serverBedrockLinux")
-	if len(subset) == 0 {
-		return "", newLookupError("Failed to locate data-platform element", nil, http.StatusBadGateway)
-	}
-
-	for _, attribute := range subset[0].Attr {
-		if attribute.Key == "href" {
-			return attribute.Val, nil
+	for _, link := range DownloadLinksReponse.Result.Links {
+		if link.DownloadType == typeRelease {
+			return link.DownloadUrl, nil
 		}
 	}
 
-	return "", newLookupError("Matched element was missing href", nil, http.StatusBadGateway)
+	return "", newLookupError("failed to find release link", nil, http.StatusInternalServerError)
 }
