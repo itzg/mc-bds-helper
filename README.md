@@ -1,0 +1,1 @@
+This is a serverless functions project deployed on [Vercel](https://vercel.com/) that provides a fallback mechanism to lookup latest Minecraft Bedrock download URL for older versions of https://github.com/itzg/docker-minecraft-bedrock-server.
