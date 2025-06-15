@@ -8,7 +8,9 @@ import (
 	"time"
 )
 
-var versionsCache = cache.New(60*time.Minute, 120*time.Minute)
+const CacheAge = 60 * time.Minute
+
+var versionsCache = cache.New(CacheAge, 120*time.Minute)
 
 const (
 	downloadLinksUrl = "https://net-secondary.web.minecraft-services.net/api/v1.0/download/links"
