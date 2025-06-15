@@ -6,8 +6,9 @@ import (
 	"net/http"
 )
 
-func GetLatest(w http.ResponseWriter, _ *http.Request) {
-	url, err := lookup.LatestVersion(lookup.TypeRelease)
+//goland:noinspection GoUnusedExportedFunction
+func GetLatestPreview(w http.ResponseWriter, _ *http.Request) {
+	url, err := lookup.LatestVersion(lookup.TypePreview)
 	if err != nil {
 		log.Printf("E: %s", err)
 		w.Header().Set("Content-Type", "text/plain")
