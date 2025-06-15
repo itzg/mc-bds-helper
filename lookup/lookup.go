@@ -2,15 +2,9 @@ package lookup
 
 import (
 	"encoding/json"
-	cache "github.com/patrickmn/go-cache"
 	"log"
 	"net/http"
-	"time"
 )
-
-const CacheAge = 60 * time.Minute
-
-var versionsCache = cache.New(CacheAge, 120*time.Minute)
 
 const (
 	downloadLinksUrl = "https://net-secondary.web.minecraft-services.net/api/v1.0/download/links"
@@ -28,12 +22,6 @@ type DownloadLinksResponse struct {
 }
 
 func LatestVersion(downloadType string) (string, *LookupError) {
-	url, present := versionsCache.Get(downloadType)
-	if present {
-		log.Print("Using cached version for type ", downloadType)
-		return url.(string), nil
-	}
-
 	resp, err := http.Get(downloadLinksUrl)
 
 	if err != nil {
@@ -52,7 +40,6 @@ func LatestVersion(downloadType string) (string, *LookupError) {
 
 	for _, link := range DownloadLinksReponse.Result.Links {
 		if link.DownloadType == downloadType {
-			versionsCache.Set(link.DownloadType, link.DownloadUrl, cache.DefaultExpiration)
 			log.Print("Resolved URL ", link.DownloadUrl, " for type ", link.DownloadType)
 			return link.DownloadUrl, nil
 		}
