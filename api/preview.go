@@ -17,7 +17,5 @@ func GetLatestPreview(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(url))
+	writeUrlResponse(w, url)
 }

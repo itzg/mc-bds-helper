@@ -1,9 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"github.com/itzg/mc-bds-helper/lookup"
 	"log"
 	"net/http"
+	"time"
 )
 
 func GetLatest(w http.ResponseWriter, _ *http.Request) {
@@ -16,7 +18,19 @@ func GetLatest(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
+	writeUrlResponse(w, url)
+}
+
+func writeUrlResponse(w http.ResponseWriter, url string) {
 	w.Header().Set("Content-Type", "text/plain")
+	writeCacheHeaders(w)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(url))
+}
+
+func writeCacheHeaders(w http.ResponseWriter) {
+	cacheAgeStr := fmt.Sprintf("max-age=%d", lookup.CacheAge/time.Second)
+	w.Header().Set("Cache-Control", cacheAgeStr)
+	w.Header().Set("CDN-Cache-Control", cacheAgeStr)
+	w.Header().Set("Vercel-CDN-Cache-Control", cacheAgeStr)
 }
